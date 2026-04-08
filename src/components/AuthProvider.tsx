@@ -12,6 +12,7 @@ interface AuthContextType {
   nome: string;
   loading: boolean;
   logout: () => void;
+  sessionKey: number;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -19,7 +20,8 @@ const AuthContext = createContext<AuthContextType>({
   perfil: 'visualizador',
   nome: '',
   loading: true,
-  logout: () => {}
+  logout: () => {},
+  sessionKey: 0
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -27,22 +29,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [perfil, setPerfil] = useState<string>('visualizador');
   const [nome, setNome] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
+  const [sessionKey, setSessionKey] = useState<number>(0);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     let isMounted = true;
 
-    // Check initial session
-    db.auth.getSession().then(async ({ data: { session } }) => {
-      if (isMounted) await handleSession(session);
-    }).catch(err => {
-      console.error('Session error:', err);
-      if (isMounted) setLoading(false);
-    });
-
+    // onAuthStateChange fires INITIAL_SESSION on setup (replaces getSession)
+    // and TOKEN_REFRESHED when the access token is renewed
     const { data: { subscription } } = db.auth.onAuthStateChange(async (event, session) => {
-      if (isMounted) await handleSession(session);
+      if (!isMounted) return;
+      await handleSession(session);
+      // Increment sessionKey on token refresh so DataContext reloads with valid token
+      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        setSessionKey(k => k + 1);
+      }
     });
 
     return () => {
@@ -89,7 +91,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await db.auth.signOut();
+    try {
+      await db.auth.signOut({ scope: 'local' });
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+    // Force clear state and redirect regardless of signOut result
+    setUser(null);
+    setPerfil('visualizador');
+    setNome('');
+    router.push('/login');
   };
 
   if (loading) {
@@ -108,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, perfil, nome, loading, logout }}>
+    <AuthContext.Provider value={{ user, perfil, nome, loading, logout, sessionKey }}>
       {children}
     </AuthContext.Provider>
   );

@@ -39,7 +39,7 @@ const DataContext = createContext<DataContextType>({
 });
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, sessionKey } = useAuth();
   const [anos, setAnos] = useState<Ano[]>([]);
   const [obras, setObras] = useState<Obra[]>([]);
   const [mapps, setMapps] = useState<Mapp[]>([]);
@@ -111,7 +111,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       isMounted = false;
       db.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, sessionKey]);
 
   return (
     <DataContext.Provider value={{ anos, obras, mapps, medicoes, configs, currentYear, setCurrentYear, syncState, setSyncState }}>

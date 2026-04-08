@@ -7,4 +7,10 @@ if (!SURL || !SKEY) {
   throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY in environment variables.");
 }
 
-export const db = createClient(SURL, SKEY);
+export const db = createClient(SURL, SKEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  }
+});
