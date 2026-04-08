@@ -28,16 +28,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    let isMounted = true;
+
     // Check initial session
     db.auth.getSession().then(async ({ data: { session } }) => {
-      await handleSession(session);
+      if (isMounted) await handleSession(session);
+    }).catch(err => {
+      console.error('Session error:', err);
+      if (isMounted) setLoading(false);
     });
 
     const { data: { subscription } } = db.auth.onAuthStateChange(async (event, session) => {
-      await handleSession(session);
+      if (isMounted) await handleSession(session);
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -55,6 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleSession = async (session: any) => {
     if (session?.user) {
       setUser(session.user);
+      setLoading(false); // Unblock screen instantly
+      
       try {
         const { data: perfilData } = await db.from('perfis').select('*').eq('id', session.user.id).single();
         if (perfilData?.perfil) {
@@ -66,8 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       setUser(null);
       setPerfil('visualizador');
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const logout = async () => {
