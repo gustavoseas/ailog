@@ -36,12 +36,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    // onAuthStateChange fires INITIAL_SESSION on setup (replaces getSession)
-    // and TOKEN_REFRESHED when the access token is renewed
     const { data: { subscription } } = db.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
       await handleSession(session);
-      // Increment sessionKey on token refresh so DataContext reloads with valid token
       if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
         setSessionKey(k => k + 1);
       }
@@ -66,22 +63,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleSession = async (session: any) => {
     if (session?.user) {
       setUser(session.user);
-      setLoading(false); // Unblock screen instantly
-      
-      try {
-        const { data: perfilData } = await db.from('perfis').select('*').eq('id', session.user.id).single();
-        if (perfilData?.perfil) {
-          setPerfil(perfilData.perfil);
+      setLoading(false);
+
+      let { data: perfilData } = await db.from('perfis').select('*').eq('id', session.user.id).single();
+
+      // If query failed (likely stale token in production), refresh session and retry
+      if (!perfilData) {
+        const { data: refreshed } = await db.auth.refreshSession();
+        if (refreshed?.session) {
+          const retry = await db.from('perfis').select('*').eq('id', session.user.id).single();
+          perfilData = retry.data;
+          // Refresh triggers TOKEN_REFRESHED → sessionKey increments → DataContext reloads
         }
-        if (perfilData?.nome) {
-          setNome(perfilData.nome);
-        } else {
-          setNome(session.user.email?.split('@')[0] || '');
-        }
-      } catch (err) {
-        console.error('Error fetching perfil:', err);
-        setNome(session.user.email?.split('@')[0] || '');
       }
+
+      if (perfilData?.perfil) setPerfil(perfilData.perfil);
+      if (perfilData?.nome) setNome(perfilData.nome);
+      else setNome(session.user.email?.split('@')[0] || '');
     } else {
       setUser(null);
       setPerfil('visualizador');
