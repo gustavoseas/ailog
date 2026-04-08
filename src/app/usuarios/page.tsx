@@ -144,7 +144,7 @@ export default function UsuariosPage() {
         }
       >
         <div style={{ fontSize: '14px', color: 'var(--text)' }}>
-          Tem certeza que deseja excluir permanentemente o acesso deste usuário?
+          Tem certeza que deseja excluir permanentemente o acesso deste usuário???
         </div>
       </Modal>
     </div>
