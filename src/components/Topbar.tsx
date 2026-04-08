@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useTheme } from './ThemeProvider';
 import { useData } from './DataContext';
@@ -37,6 +37,7 @@ interface TopbarProps {
 
 export function Topbar({ onMenuToggle }: TopbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const title = titles[pathname] || 'SEAS';
   const [themeOpen, setThemeOpen] = useState(false);
   const { currentTheme, applyTheme } = useTheme();
@@ -118,7 +119,7 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
         </div>
         
         <button className="btn" onClick={doBackup} title="Fazer Backup do Banco de Dados">💾 Backup</button>
-        <button className="btn btn-present" onClick={() => window.location.href = '/apresentacao'}>📽 Apresentação</button>
+        <button className="btn btn-present" onClick={() => router.push('/apresentacao')}>📽 Apresentação</button>
         <button className="btn" onClick={exportCSV}>⬇ CSV</button>
         {isAdmin && (
           <button className="btn btn-primary" onClick={() => setNovaObraOpen(true)}>＋ Nova Obra</button>

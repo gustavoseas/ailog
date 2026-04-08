@@ -70,6 +70,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (BUILD_ID) localStorage.setItem('seas_build_id', BUILD_ID);
     } catch {}
 
+    // ── Bootstrap session first (production-safe) ───────────────────
+    db.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isMounted || initialized) return;
+      initialized = true;
+      if (session?.user) {
+        setUser(session.user);
+        setLoading(false);
+        await loadPerfil(session.user.id, session.user.email || '');
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    }).catch(() => {
+      if (!isMounted || initialized) return;
+      initialized = true;
+      setUser(null);
+      setLoading(false);
+    });
+
     // ── Single listener for ALL auth events ─────────────────────────
     const { data: { subscription } } = db.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
@@ -104,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setPerfil('visualizador');
         setNome('');
+        setLoading(false);
         return;
       }
 
