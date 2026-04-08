@@ -44,7 +44,7 @@ export default function LoginPage() {
   return (
     <div className="login-screen" id="login-screen">
       <div className="login-box">
-        <div className="login-logo">SEAS</div>
+        <div className="login-logo">SEAS - AILOG</div>
         <div className="login-sub">Superintendência do Sistema Estadual<br />de Atendimento Socioeducativo<br />Gestão de Obras · Infraestrutura</div>
         
         {errorMsg && (
