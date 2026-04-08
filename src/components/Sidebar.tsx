@@ -14,15 +14,14 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { user, perfil, logout } = useAuth();
+  const { user, perfil, nome, logout } = useAuth();
   const { anos, obras, currentYear, setCurrentYear, syncState } = useData();
   const [showAddYear, setShowAddYear] = useState(false);
   const [newYear, setNewYear] = useState('');
 
   const isAdmin = perfil === 'admin';
   const email = user?.email || '';
-  const inicial = email.charAt(0).toUpperCase();
-  const nome = email.split('@')[0];
+  const inicial = nome ? nome.charAt(0).toUpperCase() : email.charAt(0).toUpperCase();
 
   const handleAddYear = async () => {
     const y = parseInt(newYear);

@@ -9,6 +9,7 @@ import { User } from '@supabase/supabase-js';
 interface AuthContextType {
   user: User | null;
   perfil: string;
+  nome: string;
   loading: boolean;
   logout: () => void;
 }
@@ -16,6 +17,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   perfil: 'visualizador',
+  nome: '',
   loading: true,
   logout: () => {}
 });
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [perfil, setPerfil] = useState<string>('visualizador');
+  const [nome, setNome] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
   const pathname = usePathname();
@@ -68,12 +71,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (perfilData?.perfil) {
           setPerfil(perfilData.perfil);
         }
+        if (perfilData?.nome) {
+          setNome(perfilData.nome);
+        } else {
+          setNome(session.user.email?.split('@')[0] || '');
+        }
       } catch (err) {
         console.error('Error fetching perfil:', err);
+        setNome(session.user.email?.split('@')[0] || '');
       }
     } else {
       setUser(null);
       setPerfil('visualizador');
+      setNome('');
       setLoading(false);
     }
   };
@@ -98,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, perfil, loading, logout }}>
+    <AuthContext.Provider value={{ user, perfil, nome, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );
